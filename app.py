@@ -1,34 +1,49 @@
 import streamlit as st
 import pandas as pd
-import joblib
+from sklearn.ensemble import RandomForestRegressor
 import datetime
 
 st.set_page_config(page_title="Mandar Systems - Transformer Analytics", layout="wide")
 st.title("⚡ Mandar Systems AI — Transformer Thermal Monitor")
-st.markdown("### `System Architecture: Full-Scale Dynamic Rolling Window Extraction`")
+st.markdown("### `System Architecture: Self-Training Live Inference Engine`")
 st.markdown("---")
 
+# 1. Automated Cloud Data Ingestion & Live Training Pipeline
 @st.cache_resource
-def load_full_production_assets():
-    loaded_artifact = joblib.load("mandar_systems_transformer_model.joblib")
+def initialize_and_train_live_engine():
     grid_data_url = "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
     df = pd.read_csv(grid_data_url, parse_dates=['date'], index_col='date').sort_index()
+    
+    # Feature Engineering
     df['hour'] = df.index.hour
     df['month'] = df.index.month
     df['dayofyear'] = df.index.dayofyear
     df['dayofweek'] = df.index.dayofweek
     df['OT_lag_24h'] = df['OT'].shift(24)
     df = df.dropna()
-    return loaded_artifact['model'], loaded_artifact['features'], df
+    
+    # Set the precise engineering feature space
+    features = ['hour', 'dayofweek', 'month', 'dayofyear', 'OT_lag_24h', 
+                'HUFL', 'HULL', 'MUFL', 'MULL', 'LUFL', 'LULL']
+    
+    X = df[features]
+    y = df['OT']
+    
+    # Train the Random Forest on the fly in the cloud container
+    model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+    model.fit(X, y)
+    
+    return model, features, df
 
 try:
-    with st.spinner("⏳ Loading SCADA data..."):
-        ai_engine, model_features, historical_db = load_full_production_assets()
+    with st.spinner("⏳ SCADA Engine Bootstrapping & Live Training Model..."):
+        ai_engine, model_features, historical_db = initialize_and_train_live_engine()
     st.sidebar.success("🚀 AI Engine Active")
 except Exception as e:
     st.error(f"❌ Failure: {e}")
     st.stop()
 
+# 2. Operator Interface Controls
 st.subheader("Select target evaluation window:")
 col1, col2 = st.columns(2)
 with col1:
@@ -44,6 +59,7 @@ dayofyear = selected_date.timetuple().tm_yday
 window_start = dayofyear - 7
 window_end = dayofyear + 7
 
+# Dynamic Rolling-Window Extraction
 matched_records = historical_db[
     (historical_db['dayofyear'] >= window_start) &
     (historical_db['dayofyear'] <= window_end) &
@@ -68,6 +84,7 @@ user_input_payload = pd.DataFrame([{
 
 live_prediction = ai_engine.predict(user_input_payload)[0]
 
+# 3. Visual Dispatch Status Displays
 st.markdown("---")
 m_col1, m_col2 = st.columns([1, 2])
 with m_col1:
