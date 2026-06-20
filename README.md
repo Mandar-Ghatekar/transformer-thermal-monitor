@@ -1,6 +1,7 @@
 ---
+Development Note: This was my very first project, built using AI Tool to understand basic structural syntax and integration logic. It served as the foundational stepping stone for my understanding of application of data analysis in the field of Power Market Analysis.
 
-## 📊 2. The Data Journey: SCADA Sourcing & Analytical Hurdles
+## 📊 . The Data Journey: SCADA Sourcing & Analytical Hurdles
 
 ### 📡 Data Provenance & The Operational Baseline
 The foundational telemetry data used to train and validate this system is sourced from the globally recognized **ETT (Electricity Transformer Temperature) Dataset**. Specifically, the system utilizes the `ETTh1` high-resolution telemetry log, which tracks a multi-phase transformer's operational status over a multi-year window. 
@@ -15,7 +16,7 @@ Developing this predictive framework wasn't as simple as passing raw numbers int
 
 #### 1. The 24-Hour Thermodynamic Lag Problem (`OT_lag_24h`)
 * **The Challenge:** Transformers are massive physical assets containing hundreds of liters of insulating oil. Oil has high specific heat capacity; it does not heat up or cool down instantly when electrical load spikes or drops. Early design iterations resulted in poor predictive accuracy because the model didn't understand thermal inertia.
-* **The Solution:** I engineered a custom 24-hour lagging feature (`df['OT'].shift(24)`). By feeding the model the exact core temperature from the previous day at the same hour, we provided a baseline thermal anchor, allowing the system to accurately map active heat accumulation over time.
+* **The Solution:** a custom 24-hour lagging feature (`df['OT'].shift(24)`) is engineered. By feeding the model the exact core temperature from the previous day at the same hour, we provided a baseline thermal anchor, allowing the system to accurately map active heat accumulation over time.
 
 #### 2. The Seasonal & Diurnal Shift Problem
 * **The Challenge:** A transformer is a physical asset operating under two distinct, overlapping cycles: **diurnal** (day/night fluctuations) and **seasonal** (summer/winter macro-climates). 
